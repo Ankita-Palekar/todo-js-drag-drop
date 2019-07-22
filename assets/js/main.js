@@ -23,7 +23,7 @@ list = [
 function renderHtml() {
     $('#list-container').empty();
     var listHtml = `<div class="col-sm-3" >
-          <div class="card" id="{{listId}}">
+          <div class="card" id="{{listId}}" ondrop="drop(event, this)"  ondragover="allowDrop(event)">
             <div class="card-body">
               <h5 class="card-title">{{listTitle}}</h5>
             </div>
@@ -41,7 +41,7 @@ function renderHtml() {
               </div>
     `
 
-    var addTask =  `
+    var addTask = `
     <div class="card" id="task-add-link-{{listId}}">
         <a href="#" data-list-id="{{listId}}" class="link" onClick="openInputAddTask(this)">add Task</a>
     </div>
@@ -52,9 +52,9 @@ function renderHtml() {
     </div>
 `
 
-
-    var taskHtml = `<div id="{{taskId}}" class="alert alert-info" role="alert">
+    var taskHtml = `<div draggable="true" ondragstart="drag(event, this)" data-list-task="{{listId}}-{{taskId}}"  id="{{taskId}}" class="alert alert-info" role="alert">
                  {{taskname}}
+                 <i class="fas fa-trash float-right" data-list-task="{{listId}}-{{taskId}}" onClick="deleteTask(this)"></i>
               </div>`;
 
     $.each(list, function (index, element) {
@@ -64,7 +64,8 @@ function renderHtml() {
 
         $.each(element.tasks, function (index, task) {
             var taskElement = taskHtml.replace(/{{taskname}}/g, task.name);
-            taskElement = taskElement.replace(/{{taskId}}/g, 'task-' + element.listId + '-' + task.id);
+            taskElement = taskElement.replace(/{{listId}}/g, element.listId);
+            taskElement = taskElement.replace(/{{taskId}}/g, task.id);
             $('#' + 'list-' + element.listId).append(taskElement);
         })
         $('#' + 'list-' + element.listId).append(addTask.replace(/{{listId}}/g, element.listId));
@@ -94,21 +95,51 @@ function openInputAddList() {
 
 function openInputAddTask(elem) {
     var id = $(elem).data('list-id');
-    $('#task-add-link-'+id).addClass('d-none');
-    $('#task-input-cont-'+id).removeClass('d-none');
+    $('#task-add-link-' + id).addClass('d-none');
+    $('#task-input-cont-' + id).removeClass('d-none');
 }
 
 
 
 function addTask(ele) {
     var listId = $(ele).data('list-id');
-    listEle  = _.findWhere(list, {listId: listId});
-    if ($('#task-input-'+listId).val().length > 0) {
+    listEle = _.findWhere(list, { listId: listId });
+    if ($('#task-input-' + listId).val().length > 0) {
         id = listEle.tasks.length > 0 ? _.max(_.pluck(listEle.tasks, 'id')) : 0;
-        var obj = { id: id + 1, name: $('#task-input-'+listId).val() }
+        var obj = { id: id + 1, name: $('#task-input-' + listId).val() }
         listEle.tasks.push(obj);
         renderHtml();
     } else {
         return
     }
 }
+
+
+function drag(event, ele) {
+    console.log($(ele).data('list-task'));
+     
+}
+
+function drop(event, ele) {
+
+    console.log('drop event')
+}
+
+
+function allowDrop(ev) {
+    ev.preventDefault();
+  }
+
+
+  function deleteTask(ele){
+    var ele = $(ele).data('list-task');
+    var listId = ele.split("-")[0];
+    var taskId = ele.split("-")[1];
+
+    var listEle = _.findWhere(list, {listId:  parseInt(listId)})
+    var index = _.findIndex(listEle.tasks, function(task){
+        return task.id == parseInt(taskId) ;
+    }) 
+    listEle.tasks.splice(index, 1);
+    renderHtml();
+  }
