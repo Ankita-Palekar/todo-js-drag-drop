@@ -35,20 +35,20 @@ function renderHtml() {
                   <a href="#" class="link" onClick="openInputAddList()">add List</a>
               </div>
               
-              <div class="d-none"  id="list-input">
-                <input id="list-input" type="text" class="form-control "  placeholder="add list">
+              <div class="d-none"  id="list-input-cont">
+                <input id="list-input" type="text" class="form-control "  placeholder="add list" value="">
                 <button type="button" onClick="addList()" class="btn btn-success">Add List</button>  
               </div>
     `
 
     var addTask =  `
     <div class="card" id="task-add-link-{{listId}}">
-        <a href="#" data-list="{{listId}}" class="link" onClick="openInputAddTask(this)">add Task</a>
+        <a href="#" data-list-id="{{listId}}" class="link" onClick="openInputAddTask(this)">add Task</a>
     </div>
     
-    <div class="d-none"  id="task-input-{{listId}}">
-      <input id="task-input-{{listId}}" data-list-id="{{listId}}"  type="text" class="form-control "  placeholder="add task">
-      <button type="button" onClick="addTask()" class="btn btn-success">Add Task</button>  
+    <div class="d-none"  id="task-input-cont-{{listId}}">
+      <input id="task-input-{{listId}}" data-list-id="{{listId}}"  type="text" class="form-control "  placeholder="add task" value="">
+      <button type="button" data-list-id="{{listId}}"   onClick="addTask(this)" class="btn btn-success">Add Task</button>  
     </div>
 `
 
@@ -74,9 +74,9 @@ function renderHtml() {
 }
 
 function addList() {
-    if ($('#list-input').text.length > 0) {
+    if ($('#list-input').val().length > 0) {
         id = list.length > 0 ? _.max(_.pluck(list, 'listId')) : 0;
-        var obj = { listId: id + 1, listTitle: $('#list-input').text(), tasks: [] }
+        var obj = { listId: id + 1, listTitle: $('#list-input').val(), tasks: [] }
         list.push(obj);
         renderHtml();
     } else {
@@ -87,14 +87,28 @@ function addList() {
 
 
 function openInputAddList() {
-    $('#list-input').removeClass('d-none');
+    $('#list-input-cont').removeClass('d-none');
     $('#list-add-link').addClass('d-none');
 }
 
 
 function openInputAddTask(elem) {
-    var id = $(elem).data('list');
+    var id = $(elem).data('list-id');
     $('#task-add-link-'+id).addClass('d-none');
-    $('#task-input-'+id).removeClass('d-none');
+    $('#task-input-cont-'+id).removeClass('d-none');
 }
 
+
+
+function addTask(ele) {
+    var listId = $(ele).data('list-id');
+    listEle  = _.findWhere(list, {listId: listId});
+    if ($('#task-input-'+listId).val().length > 0) {
+        id = listEle.tasks.length > 0 ? _.max(_.pluck(listEle.tasks, 'id')) : 0;
+        var obj = { id: id + 1, name: $('#task-input-'+listId).val() }
+        listEle.tasks.push(obj);
+        renderHtml();
+    } else {
+        return
+    }
+}
